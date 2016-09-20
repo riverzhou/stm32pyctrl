@@ -4,8 +4,17 @@ from serial import Serial
 from struct import calcsize, pack, unpack
 from time   import sleep
 from threading import Lock,Thread
+from copy   import deepcopy
+
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+
 
 #==================================================
+
+len_time = 60
+unit_time = 200
 
 list_mpu_anagle = []
 list_mpu_count  = []
@@ -209,7 +218,7 @@ class data_input():
 	def save2list(self):
 		global list_mpu_anagle, list_mpu_count, lock_common_list
 		lock_common_list.acquire()
-		list_mpu_anagle.append(self.env.bal_angle)
+		list_mpu_anagle.append(self.env.mpu_bal_angle)
 		list_mpu_count.append(self.env.mpu_count)
 		lock_common_list.release()
 
@@ -231,6 +240,9 @@ class bluecom(Thread):
 		print('bluecom thread started')
 		self.proc_read()
 	
+	def close(self):
+		self.dev.close()
+
 	def proc_read(self):
 		buff = b''
 		while (1):
@@ -239,9 +251,9 @@ class bluecom(Thread):
 			buff += data
 			package = data_input(buff)
 			if(package.checked):
-				#print('package parsed , buff reset')
-				package.print()
 				package.save2list()
+				#print('package parsed , buff reset')
+				#package.print()
 				buff = b''
 	
 	def proc_write(self):
@@ -254,18 +266,47 @@ class bluecom(Thread):
 		ret = self.dev.write(buff)
 		print('%d bytes writed'%ret)
 
+def update(i):
+	global list_mpu_anagle, list_mpu_count, lock_common_list, len_time, unit_time
+	lock_common_list.acquire()
+	empty = len_time - len(list_mpu_count)
+	if empty > 0:
+		x = deepcopy(list_mpu_count)
+		y = deepcopy(list_mpu_anagle)
+	else:
+		x = deepcopy(list_mpu_count[-len_time:])
+		y = deepcopy(list_mpu_anagle[-len_time:])
+	lock_common_list.release()
+
+	if len(x) <= 2: return line,
+	if empty > 0:
+		a = []
+		b = []
+		for i in range(empty):
+			a.append(x[0] - unit_time*(empty-i))
+			b.append(y[0])
+		x = a+x
+		y = b+y
+
+	maxy=max(y)*1.1
+	ax.set_xlim(min(x), max(x))
+	ax.set_ylim(-maxy, maxy)
+	ax.figure.canvas.draw()
+
+	line.set_data(x, y)
+	return line,
+
 #==================================================
 
 if __name__ == '__main__':
 	blue=bluecom()
 	blue.proc_write()
 	blue.start()
-	while(1):
-		sleep(2)
-		lock_common_list.acquire()
-		print(list_mpu_anagle)
-		print(list_mpu_count)
-		lock_common_list.release()
-	ser.close()
-
+	fig = plt.figure()
+	ax = plt.axes()
+	line, = ax.plot([], [], lw=2)
+	#anim = animation.FuncAnimation(fig, update, blit=True)
+	anim = animation.FuncAnimation(fig, update)
+	plt.show()
+	blue.close()
 
