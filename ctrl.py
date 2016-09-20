@@ -9,6 +9,7 @@ from copy   import deepcopy
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+#import pylab as pl
 
 
 #==================================================
@@ -56,7 +57,7 @@ struct cmd_buff_t{
 
 class cmd_type():
 	def __init__(self):
-		self.bal_angle = 1
+		self.bal_angle = 1800
 		self.bal_kp = 501
 		self.bal_kd = 1500
 		self.vel_kp = 80
@@ -267,7 +268,7 @@ class bluecom(Thread):
 		print('%d bytes writed'%ret)
 
 def update(i):
-	global list_mpu_anagle, list_mpu_count, lock_common_list, len_time, unit_time
+	global list_mpu_anagle, list_mpu_count, lock_common_list, len_time, unit_time, mpu_angle, mpu_angle_avg
 	lock_common_list.acquire()
 	empty = len_time - len(list_mpu_count)
 	if empty > 0:
@@ -278,7 +279,12 @@ def update(i):
 		y = deepcopy(list_mpu_anagle[-len_time:])
 	lock_common_list.release()
 
-	if len(x) <= 2: return line,
+	if len(x) <= 2: return mpu_angle,mpu_angle_avg
+
+	narray= np.array(y)
+	avg_y = np.mean(narray)
+	std_y = np.std(narray)
+
 	if empty > 0:
 		a = []
 		b = []
@@ -288,13 +294,17 @@ def update(i):
 		x = a+x
 		y = b+y
 
-	maxy=max(y)*1.1
-	ax.set_xlim(min(x), max(x))
-	ax.set_ylim(-maxy, maxy)
+	max_y=max(y)*1.1
+	min_x=min(x)
+	max_x=max(x)
+	ax.set_xlim(min_x, max_x)
+	ax.set_ylim(-max_y, max_y)
 	ax.figure.canvas.draw()
 
-	line.set_data(x, y)
-	return line,
+	mpu_angle.set_data(x, y)
+	mpu_angle_avg.set_data([min_x,max_x],[avg_y,avg_y])
+	plt.annotate(format('%.2f / %.2f' % (avg_y,std_y)), xy=(x[0],avg_y), xytext=(x[0],avg_y*1.01))
+	return mpu_angle,mpu_angle_avg
 
 #==================================================
 
@@ -304,9 +314,9 @@ if __name__ == '__main__':
 	blue.start()
 	fig = plt.figure()
 	ax = plt.axes()
-	line, = ax.plot([], [], lw=2)
-	#anim = animation.FuncAnimation(fig, update, blit=True)
+	mpu_angle,mpu_angle_avg = ax.plot([],[],'-',[],[],'--')
 	anim = animation.FuncAnimation(fig, update,interval=40)
+	plt.grid()
 	plt.show()
 	blue.close()
 
