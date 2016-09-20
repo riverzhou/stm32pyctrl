@@ -417,10 +417,10 @@ class bluecom(Thread):
 		#for b in buff: print(hex(b),' ',end='')
 		#print()
 		ret = self.dev.write(buff) 
-		print('%d bytes writed'%ret)
+		#print('%d bytes writed'%ret)
 		#sleep(1)
 		ret = self.dev.write(buff)
-		print('%d bytes writed'%ret)
+		#print('%d bytes writed'%ret)
 
 def update(i):
 	global db_env
