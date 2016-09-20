@@ -3,12 +3,7 @@
 from serial import Serial
 from struct import calcsize, pack, unpack
 
-#import time
-
-
-fmt_input  = '=HHiiiiiiiiiiiiiiiiiiiiHH'
 fmt_output = '=HHiiiiiiiiiHH'
-len_input  = calcsize(fmt_input)
 len_output = calcsize(fmt_output)
 
 serial_dev = '/dev/rfcomm0'
@@ -71,7 +66,8 @@ class env_type():
 		self.cmd_right = p[19]
 
 	def print(self):
-		print('bat_v %-4d bal_a %-4d bal_p %-4d bal_d %-4d vel_p %-4d vel_i %-4d enc_f %-4d mpu_c %-6d mbal_a %-6d mbal_g %-8d mbal_t %-8d enc_l %-3d enc_r %-3d mot_l %-6d mot_r %-6d' % (
+		print('bat_v %-4d bal_a %-4d bal_p %-4d bal_d %-4d vel_p %-4d vel_i %-4d enc_f %-4d mpu_c %-6d mbal_a %-6d mbal_g %-8d mbal_t %-8d enc_l %-3d enc_r %-3d mot_l %-6d mot_r %-6d' % 
+		(
 		self.bat_voltage,
 		self.bal_angle,
 		self.bal_kp,
@@ -86,18 +82,20 @@ class env_type():
 		self.enc_left,
 		self.enc_right,
 		self.moto_left,
-		self.moto_right
-		)
+		self.moto_right)
 		)
 		return
 
 
 class data_input():
-	len_pack = len_input
+	fmt_input  = '=HHiiiiiiiiiiiiiiiiiiiiHH'
+	len_input  = calcsize(fmt_input)
 
-	def __init__(self, raw):
-		p = unpack(fmt_input,raw)
+	def __init__(self, data):
 		self.checked = False
+		if len(data) < self.len_input : return
+		raw = data[-self.len_input:]
+		p = unpack(self.fmt_input,raw)
 		self.head = p[0]
 		self.len  = p[1]
 		self.alen = p[22]
@@ -106,11 +104,8 @@ class data_input():
 		self.checked = True
 		self.env  = env_type(p[2:22])
 
-	def print(self):
-		self.env.print()
-
 	def check(self, raw):
-		if(self.head != 0xff or self.len != self.len_pack or self.len & self.alen):
+		if(self.head != 0xff or self.len != self.len_input or self.len & self.alen):
 			return False
 		s = 0
 		for b in raw[:-2]:
@@ -119,6 +114,10 @@ class data_input():
 			print('data_input check sum failed')
 			return False
 		return True
+
+	def print(self):
+		self.env.print()
+
 
 def ser_init(dev,bound):
 	ser = Serial(dev, bound)
@@ -129,15 +128,6 @@ def ser_init(dev,bound):
 		print(dev,':open failed')
 		return None
 
-def proc_parse(buff):
-	start = len(buff) - len_input
-	if(start < 0):
-		return None
-	package = data_input(buff[start:])
-	if(package.checked != True):
-		return None
-	return package
-	
 
 def proc_read(ser):
 	buff = b''
@@ -145,8 +135,8 @@ def proc_read(ser):
 		data = ser.read()
 		#print(data,end='',flush=True)
 		buff += data
-		package = proc_parse(buff)
-		if(package != None):
+		package = data_input(buff)
+		if(package.checked):
 			#print('package parsed , buff reset')
 			package.print()
 			buff = b''
