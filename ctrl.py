@@ -9,17 +9,150 @@ from copy   import deepcopy
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+
 #import pylab as pl
 
 
 #==================================================
 
-len_time = 60
-unit_time = 200
+class record():
+	def __init__(self):
+		self.mpu_angle_avg = None
+		self.mpu_angle_std = None
+		self.mpu_gypo_avg   = None
+		self.mpu_gypo_std   = None
+		self.enc_left_avg   = None
+		self.enc_left_std   = None
+		self.enc_right_avg  = None
+		self.enc_right_std  = None
 
-list_mpu_anagle = []
-list_mpu_count  = []
-lock_common_list = Lock()
+class plt_data():
+	def __init__(self):
+		self.lock_common = Lock()
+		self.array_time  = np.array([])
+		self.array_angle = np.array([])
+		self.array_gypo  = np.array([])
+		self.array_left  = np.array([])
+		self.array_right = np.array([])
+		self.time_min    = None
+		self.time_max    = None
+		self.angle_avg   = None
+		self.angle_std   = None
+		self.angle_min   = None
+		self.angle_max   = None
+		self.gypo_avg    = None
+		self.gypo_std    = None
+		self.gypo_min    = None
+		self.gypo_max    = None
+		self.left_avg    = None
+		self.left_std    = None
+		self.left_min    = None
+		self.left_max    = None
+		self.right_avg   = None
+		self.right_std   = None
+		self.right_min   = None
+		self.right_max   = None
+
+	def calc(self):
+		self.time_min   = np.min(self.array_time)
+		self.time_max   = np.max(self.array_time)
+		self.angle_avg  = np.mean(self.array_angle)
+		self.angle_std  = np.std(self.array_angle)
+		self.angle_min  = np.min(self.array_angle)
+		self.angle_max  = np.max(self.array_angle)
+		self.gypo_avg   = np.mean(self.array_gypo)
+		self.gypo_std   = np.std(self.array_gypo)
+		self.gypo_min   = np.min(self.array_gypo)
+		self.gypo_max   = np.max(self.array_gypo)
+		self.left_avg   = np.mean(self.array_left)
+		self.left_std   = np.std(self.array_left)
+		self.left_min   = np.min(self.array_left)
+		self.left_max   = np.max(self.array_left)
+		self.right_avg  = np.mean(self.array_right)
+		self.right_std  = np.std(self.array_right)
+		self.right_min  = np.min(self.array_right)
+		self.right_max  = np.max(self.array_right)
+
+	def get_angle(self):
+		self.lock_common.acquire()
+		x = deepcopy(self.array_time)
+		y = deepcopy(self.array_angle)
+		min_x = self.time_min
+		max_x = self.time_max
+		min_y = self.angle_min
+		max_y = self.angle_max
+		avg_y = self.angle_avg
+		std_y = self.angle_std
+		self.lock_common.release()
+		return x, y, min_x, min_y, max_x, max_y, avg_y, std_y
+
+class database():
+	len_time = 60
+	unit_time = 200
+
+	def __init__(self):
+		self.lock_common = Lock()
+		self.list_record = []
+		self.record 	 = record()
+		self.cmd 	 = cmd_type()
+		self.plt_data 	 = plt_data()
+
+		self.list_mpu_count  = []
+		self.list_mpu_angle  = []
+		self.list_mpu_gypo   = []
+		self.list_enc_left   = []
+		self.list_enc_right  = []
+
+	def reset(self, cmd=None):
+		self.cmd = cmd_type() if cmd == None else cmd
+		self.list_mpu_count  = []
+		self.list_mpu_angle  = []
+		self.list_mpu_gypo   = []
+		self.list_enc_left   = []
+		self.list_enc_right  = []
+
+	def add_data(self, env):
+		if len(self.list_mpu_count) == 0:
+			for i in range(self.len_time):
+				self.list_mpu_count.append(env.mpu_count - self.unit_time*(self.len_time-i))
+				self.list_mpu_angle.append(env.mpu_bal_angle)
+				self.list_mpu_gypo.append(env.mpu_bal_gypo)
+				self.list_enc_left.append(env.enc_left)
+				self.list_enc_right.append(env.enc_right)
+		self.list_mpu_count.append(env.mpu_count)
+		self.list_mpu_angle.append(env.mpu_bal_angle)
+		self.list_mpu_gypo.append(env.mpu_bal_gypo)
+		self.list_enc_left.append(env.enc_left)
+		self.list_enc_right.append(env.enc_right)
+		self.make_plt()
+		self.make_record()
+
+	def make_plt(self):
+		self.plt_data.lock_common.acquire()
+		self.plt_data.array_time  = np.array(self.list_mpu_count[-self.len_time:])
+		self.plt_data.array_angle = np.array(self.list_mpu_angle[-self.len_time:])
+		self.plt_data.array_gypo  = np.array(self.list_mpu_gypo[-self.len_time:])
+		self.plt_data.array_left  = np.array(self.list_enc_left[-self.len_time:])
+		self.plt_data.array_right = np.array(self.list_enc_right[-self.len_time:])
+		self.plt_data.calc()
+		self.plt_data.lock_common.release()
+
+	def make_record(self):
+		self.record.mpu_angle_avg  = self.plt_data.angle_avg
+		self.record.mpu_angle_std  = self.plt_data.angle_std
+		self.record.mpu_gypo_avg   = self.plt_data.gypo_avg
+		self.record.mpu_gypo_std   = self.plt_data.gypo_std
+		self.record.enc_left_avg   = self.plt_data.left_avg
+		self.record.enc_left_std   = self.plt_data.left_std
+		self.record.enc_right_avg  = self.plt_data.right_avg
+		self.record.enc_right_std  = self.plt_data.right_std
+
+	def save_record(self):
+		self.list_record.append((self.cmd, self.record))
+
+	def print_record_angle(self):
+		if len(self.list_record) >= 1:
+			print('bal_angle %d --- std_angle %d' % (self.list_record[-1][0].bal_angle, self.list_record[-1][1].mpu_angle_std))
 
 ###############################################
 
@@ -57,8 +190,8 @@ struct cmd_buff_t{
 
 class cmd_type():
 	def __init__(self):
-		self.bal_angle = 1800
-		self.bal_kp = 501
+		self.bal_angle = 0
+		self.bal_kp = 500
 		self.bal_kd = 1500
 		self.vel_kp = 80
 		self.vel_ki = 400
@@ -75,8 +208,8 @@ class data_output():
 	fmt_output = '=HHiiiiiiiiiHH'
 	len_output = calcsize(fmt_output)
 
-	def __init__(self):
-		self.cmd = cmd_type()
+	def __init__(self, cmd=None):
+		self.cmd  = cmd_type() if cmd == None else cmd
 		self.head = 0xff
 		self.len  = self.len_output
 		self.alen = (~self.len) & 0xffff
@@ -216,17 +349,39 @@ class data_input():
 			return False
 		return True
 
-	def save2list(self):
-		global list_mpu_anagle, list_mpu_count, lock_common_list
-		lock_common_list.acquire()
-		list_mpu_anagle.append(self.env.mpu_bal_angle)
-		list_mpu_count.append(self.env.mpu_count)
-		lock_common_list.release()
+	def save2db(self):
+		global db_env
+		db_env.add_data(self.env)
 
 	def print(self):
 		self.env.print()
 
 #==================================================
+
+class control(Thread):
+	cycle_time = 120
+
+	def __init__(self,blue):
+		Thread.__init__(self)
+		self.blue = blue
+		self.cmd  = cmd_type()
+
+	def run(self):
+		self.blue.proc_write(self.cmd)
+		while (1):
+			sleep(self.cycle_time)
+			self.adjust_cmd()
+			self.blue.proc_write(self.cmd)
+
+	def adjust_cmd(self):
+		global db_env
+		old_angle = self.cmd.bal_angle
+		self.cmd.bal_angle = (int)(db_env.plt_data.angle_avg)
+		db_env.save_record()
+		db_env.reset(self.cmd)
+		db_env.print_record_angle()
+		print('adjust params: angle from %d to %d' % (old_angle, self.cmd.bal_angle))
+
 
 class bluecom(Thread):
 	devname = '/dev/rfcomm0'
@@ -252,71 +407,59 @@ class bluecom(Thread):
 			buff += data
 			package = data_input(buff)
 			if(package.checked):
-				package.save2list()
+				package.save2db()
 				#print('package parsed , buff reset')
 				#package.print()
 				buff = b''
 	
-	def proc_write(self):
-		buff = data_output().makebuff()
+	def proc_write(self, cmd=None):
+		buff = data_output(cmd).makebuff()
 		#for b in buff: print(hex(b),' ',end='')
 		#print()
 		ret = self.dev.write(buff) 
 		print('%d bytes writed'%ret)
-		sleep(1)
+		#sleep(1)
 		ret = self.dev.write(buff)
 		print('%d bytes writed'%ret)
 
 def update(i):
-	global list_mpu_anagle, list_mpu_count, lock_common_list, len_time, unit_time, mpu_angle, mpu_angle_avg
-	lock_common_list.acquire()
-	empty = len_time - len(list_mpu_count)
-	if empty > 0:
-		x = deepcopy(list_mpu_count)
-		y = deepcopy(list_mpu_anagle)
-	else:
-		x = deepcopy(list_mpu_count[-len_time:])
-		y = deepcopy(list_mpu_anagle[-len_time:])
-	lock_common_list.release()
+	global db_env
 
-	if len(x) <= 2: return mpu_angle,mpu_angle_avg
+	x, y, min_x, min_y, max_x, max_y, avg_y, std_y = db_env.plt_data.get_angle()
 
-	narray= np.array(y)
-	avg_y = np.mean(narray)
-	std_y = np.std(narray)
+	if len(x) == 0 or min_x == None :
+		return mpu_angle,mpu_angle_avg
 
-	if empty > 0:
-		a = []
-		b = []
-		for i in range(empty):
-			a.append(x[0] - unit_time*(empty-i))
-			b.append(y[0])
-		x = a+x
-		y = b+y
+	min_y = min_y * 0.9 if min_y > 0 else min_y * 1.1
+	max_y = max_y * 1.1 if max_y > 0 else max_y * 0.9
 
-	max_y=max(y)*1.1
-	min_x=min(x)
-	max_x=max(x)
 	ax.set_xlim(min_x, max_x)
-	ax.set_ylim(-max_y, max_y)
+	ax.set_ylim(min_y, max_y)
 	ax.figure.canvas.draw()
 
 	mpu_angle.set_data(x, y)
-	mpu_angle_avg.set_data([min_x,max_x],[avg_y,avg_y])
-	plt.annotate(format('%.2f / %.2f' % (avg_y,std_y)), xy=(x[0],avg_y), xytext=(x[0],avg_y*1.01))
+	mpu_angle_avg.set_data([min_x,max_x],[avg_y, avg_y])
+	plt.annotate(format('%.2f / %.2f' % (avg_y, std_y)), xy=(x[0], avg_y), xytext=(x[0], avg_y*0.95))
+
 	return mpu_angle,mpu_angle_avg
 
 #==================================================
 
 if __name__ == '__main__':
-	blue=bluecom()
-	blue.proc_write()
+	db_env = database()
+
+	blue = bluecom()
 	blue.start()
+
+	ctrl = control(blue)
+	ctrl.start()
+	
 	fig = plt.figure()
 	ax = plt.axes()
 	mpu_angle,mpu_angle_avg = ax.plot([],[],'-',[],[],'--')
 	anim = animation.FuncAnimation(fig, update,interval=40)
 	plt.grid()
 	plt.show()
+
 	blue.close()
 
