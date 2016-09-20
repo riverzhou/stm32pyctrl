@@ -3,11 +3,13 @@
 from serial import Serial
 from struct import calcsize, pack, unpack
 from time   import sleep
+from threading import Lock,Thread
 
 #==================================================
 
-serial_dev = '/dev/rfcomm0'
-serial_rate= 9600
+list_mpu_anagle = []
+list_mpu_count  = []
+lock_common_list = Lock()
 
 ###############################################
 
@@ -204,51 +206,66 @@ class data_input():
 			return False
 		return True
 
+	def save2list(self):
+		global list_mpu_anagle, list_mpu_count, lock_common_list
+		lock_common_list.acquire()
+		list_mpu_anagle.append(self.env.bal_angle)
+		list_mpu_count.append(self.env.mpu_count)
+		lock_common_list.release()
+
 	def print(self):
 		self.env.print()
 
 #==================================================
 
-def ser_init(dev,bound):
-	ser = Serial(dev, bound)
-	if(ser.isOpen()):
-		print(dev,':open succeed')
-		return ser
-	else:
-		print(dev,':open failed')
-		return None
+class bluecom(Thread):
+	devname = '/dev/rfcomm0'
+	rate = 9600
 
+	def __init__(self):
+		Thread.__init__(self)
+		self.dev = Serial(self.devname, self.rate)
+		print('Serial opened')
 
-def proc_read(ser):
-	buff = b''
-	while (1):
-		data = ser.read()
-		#print(data,end='',flush=True)
-		buff += data
-		package = data_input(buff)
-		if(package.checked):
-			#print('package parsed , buff reset')
-			package.print()
-			buff = b''
+	def run(self):
+		print('bluecom thread started')
+		self.proc_read()
 	
-
-def proc_write(ser):
-	buff = data_output().makebuff()
-	#for b in buff: print(hex(b),' ',end='')
-	#print()
-	ret = ser.write(buff) 
-	print('%d bytes writed'%ret)
-	sleep(1)
-	ser.write(buff)
-	print('%d bytes writed'%ret)
+	def proc_read(self):
+		buff = b''
+		while (1):
+			data = self.dev.read()
+			#print(data,end='',flush=True)
+			buff += data
+			package = data_input(buff)
+			if(package.checked):
+				#print('package parsed , buff reset')
+				package.print()
+				package.save2list()
+				buff = b''
+	
+	def proc_write(self):
+		buff = data_output().makebuff()
+		#for b in buff: print(hex(b),' ',end='')
+		#print()
+		ret = self.dev.write(buff) 
+		print('%d bytes writed'%ret)
+		sleep(1)
+		ret = self.dev.write(buff)
+		print('%d bytes writed'%ret)
 
 #==================================================
 
 if __name__ == '__main__':
-	ser=ser_init(serial_dev,serial_rate)
-	if(ser==None): exit()
-	proc_write(ser)
-	proc_read(ser)
+	blue=bluecom()
+	blue.proc_write()
+	blue.start()
+	while(1):
+		sleep(2)
+		lock_common_list.acquire()
+		print(list_mpu_anagle)
+		print(list_mpu_count)
+		lock_common_list.release()
 	ser.close()
 
 
