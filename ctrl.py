@@ -306,7 +306,7 @@ if __name__ == '__main__':
 	ax = plt.axes()
 	line, = ax.plot([], [], lw=2)
 	#anim = animation.FuncAnimation(fig, update, blit=True)
-	anim = animation.FuncAnimation(fig, update)
+	anim = animation.FuncAnimation(fig, update,interval=40)
 	plt.show()
 	blue.close()
 
