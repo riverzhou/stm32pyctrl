@@ -2,12 +2,102 @@
 
 from serial import Serial
 from struct import calcsize, pack, unpack
+from time   import sleep
 
-fmt_output = '=HHiiiiiiiiiHH'
-len_output = calcsize(fmt_output)
+#==================================================
 
 serial_dev = '/dev/rfcomm0'
 serial_rate= 9600
+
+###############################################
+
+'''
+struct cmd_t{
+        int bal_angle;
+        int bal_kp;
+        int bal_kd;
+        int vel_kp;
+        int vel_ki;
+        int enc_filte;
+        int turn_kp;
+        int turn_ki;
+        int turn_cmd;
+};
+
+struct cmd_buff_t{
+        unsigned short head;
+        unsigned short len;
+        struct cmd_t cmd;
+        unsigned short alen;
+        unsigned short sum;
+};
+{
+        cmd_buff_p->cmd.bal_angle = 0;
+        cmd_buff_p->cmd.bal_kp    = 500;
+        cmd_buff_p->cmd.bal_kd    = 1500;
+        cmd_buff_p->cmd.vel_kp    = 80;
+        cmd_buff_p->cmd.vel_ki    = 400;
+        cmd_buff_p->cmd.enc_filte = 900;
+        cmd_buff_p->cmd.turn_kp   = 0;
+        cmd_buff_p->cmd.turn_ki   = 0;
+        cmd_buff_p->cmd.turn_cmd  = 0;
+'''
+
+class cmd_type():
+	def __init__(self):
+		self.bal_angle = 1
+		self.bal_kp = 501
+		self.bal_kd = 1500
+		self.vel_kp = 80
+		self.vel_ki = 400
+		self.enc_filte = 900
+		self.turn_kp = 0
+		self.turn_ki = 0
+		self.turn_cmd = 0
+		return
+
+	def print(self):
+		return
+
+class data_output():
+	fmt_output = '=HHiiiiiiiiiHH'
+	len_output = calcsize(fmt_output)
+
+	def __init__(self):
+		self.cmd = cmd_type()
+		self.head = 0xff
+		self.len  = self.len_output
+		self.alen = (~self.len) & 0xffff
+		self.sum  = 0
+		return
+
+	def makebuff(self):
+		buff = pack(self.fmt_output,\
+			self.head,\
+			self.len,\
+			self.cmd.bal_angle,\
+			self.cmd.bal_kp,\
+			self.cmd.bal_kd,\
+			self.cmd.vel_kp,\
+			self.cmd.vel_ki,\
+			self.cmd.enc_filte,\
+			self.cmd.turn_kp,\
+			self.cmd.turn_ki,\
+			self.cmd.turn_cmd,\
+			self.alen,\
+			0)
+		s = 0
+		for b in buff:
+			s += b
+		s = s & 0xffff
+		checksum = pack('H',s)
+		buff = buff[:-2] + checksum
+		return buff
+		
+	def print(self):
+		self.cmd.print()
+
+#==================================================
 
 '''
 struct env_t{
@@ -86,7 +176,6 @@ class env_type():
 		)
 		return
 
-
 class data_input():
 	fmt_input  = '=HHiiiiiiiiiiiiiiiiiiiiHH'
 	len_input  = calcsize(fmt_input)
@@ -110,7 +199,7 @@ class data_input():
 		s = 0
 		for b in raw[:-2]:
 			s += b
-		if(self.sum != s):
+		if(self.sum != (s & 0xffff) ):
 			print('data_input check sum failed')
 			return False
 		return True
@@ -118,6 +207,7 @@ class data_input():
 	def print(self):
 		self.env.print()
 
+#==================================================
 
 def ser_init(dev,bound):
 	ser = Serial(dev, bound)
@@ -142,9 +232,22 @@ def proc_read(ser):
 			buff = b''
 	
 
+def proc_write(ser):
+	buff = data_output().makebuff()
+	#for b in buff: print(hex(b),' ',end='')
+	#print()
+	ret = ser.write(buff) 
+	print('%d bytes writed'%ret)
+	sleep(1)
+	ser.write(buff)
+	print('%d bytes writed'%ret)
+
+#==================================================
+
 if __name__ == '__main__':
 	ser=ser_init(serial_dev,serial_rate)
 	if(ser==None): exit()
+	proc_write(ser)
 	proc_read(ser)
 	ser.close()
 
