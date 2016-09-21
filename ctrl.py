@@ -87,8 +87,8 @@ class plt_data():
 		return x, y, min_x, min_y, max_x, max_y, avg_y, std_y
 
 class database():
-	len_time = 60
-	unit_time = 200
+	len_time = 600
+	unit_time = 20
 
 	def __init__(self):
 		self.lock_common = Lock()
@@ -191,11 +191,11 @@ struct cmd_buff_t{
 class cmd_type():
 	def __init__(self):
 		self.bal_angle = 0
-		self.bal_kp = 500
-		self.bal_kd = 1500
+		self.bal_kp = 20000
+		self.bal_kd = 1000
 		self.vel_kp = 80
 		self.vel_ki = 400
-		self.enc_filte = 900
+		self.enc_filte = 800
 		self.turn_kp = 0
 		self.turn_ki = 0
 		self.turn_cmd = 0
