@@ -12,7 +12,6 @@ import matplotlib.animation as animation
 
 #import pylab as pl
 
-
 #==================================================
 
 class record():
@@ -25,6 +24,10 @@ class record():
 		self.enc_left_std   = None
 		self.enc_right_avg  = None
 		self.enc_right_std  = None
+		self.mot_left_avg   = None
+		self.mot_left_std   = None
+		self.mot_right_avg  = None
+		self.mot_right_std  = None
 
 class plt_data():
 	def __init__(self):
@@ -32,8 +35,12 @@ class plt_data():
 		self.array_time  = np.array([])
 		self.array_angle = np.array([])
 		self.array_gypo  = np.array([])
-		self.array_left  = np.array([])
-		self.array_right = np.array([])
+		self.array_lenc  = np.array([])
+		self.array_renc  = np.array([])
+		self.array_lmot  = np.array([])
+		self.array_rmot  = np.array([])
+		self.array_ldrv  = np.array([]) 
+		self.array_rdrv  = np.array([])
 		self.time_min    = None
 		self.time_max    = None
 		self.angle_avg   = None
@@ -44,14 +51,22 @@ class plt_data():
 		self.gypo_std    = None
 		self.gypo_min    = None
 		self.gypo_max    = None
-		self.left_avg    = None
-		self.left_std    = None
-		self.left_min    = None
-		self.left_max    = None
-		self.right_avg   = None
-		self.right_std   = None
-		self.right_min   = None
-		self.right_max   = None
+		self.lenc_avg    = None
+		self.lenc_std    = None
+		self.lenc_min    = None
+		self.lenc_max    = None
+		self.renc_avg    = None
+		self.renc_std    = None
+		self.renc_min    = None
+		self.renc_max    = None
+		self.lmot_avg    = None
+		self.lmot_std    = None
+		self.lmot_min    = None
+		self.lmot_max    = None
+		self.rmot_avg    = None
+		self.rmot_std    = None
+		self.rmot_min    = None
+		self.rmot_max    = None
 
 	def calc(self):
 		self.time_min   = np.min(self.array_time)
@@ -64,27 +79,61 @@ class plt_data():
 		self.gypo_std   = np.std(self.array_gypo)
 		self.gypo_min   = np.min(self.array_gypo)
 		self.gypo_max   = np.max(self.array_gypo)
-		self.left_avg   = np.mean(self.array_left)
-		self.left_std   = np.std(self.array_left)
-		self.left_min   = np.min(self.array_left)
-		self.left_max   = np.max(self.array_left)
-		self.right_avg  = np.mean(self.array_right)
-		self.right_std  = np.std(self.array_right)
-		self.right_min  = np.min(self.array_right)
-		self.right_max  = np.max(self.array_right)
+		self.lenc_avg   = np.mean(self.array_lenc)
+		self.lenc_std   = np.std(self.array_lenc)
+		self.lenc_min   = np.min(self.array_lenc)
+		self.lenc_max   = np.max(self.array_lenc)
+		self.renc_avg   = np.mean(self.array_renc)
+		self.renc_std   = np.std(self.array_renc)
+		self.renc_min   = np.min(self.array_renc)
+		self.renc_max   = np.max(self.array_renc)
+		self.lmot_avg   = np.mean(self.array_lmot)
+		self.lmot_std   = np.std(self.array_lmot)
+		self.lmot_min   = np.min(self.array_lmot)
+		self.lmot_max   = np.max(self.array_lmot)
+		self.rmot_avg   = np.mean(self.array_rmot)
+		self.rmot_std   = np.std(self.array_rmot)
+		self.rmot_min   = np.min(self.array_rmot)
+		self.rmot_max   = np.max(self.array_rmot)
 
-	def get_angle(self):
+	def get_data(self):
+		data = {}
 		self.lock_common.acquire()
-		x = deepcopy(self.array_time)
-		y = deepcopy(self.array_angle)
-		min_x = self.time_min
-		max_x = self.time_max
-		min_y = self.angle_min
-		max_y = self.angle_max
-		avg_y = self.angle_avg
-		std_y = self.angle_std
+		data['time']  = deepcopy(self.array_time)
+		data['angle'] = deepcopy(self.array_angle)
+		data['gypo']  = deepcopy(self.array_gypo)
+		data['lenc']  = deepcopy(self.array_lenc)
+		data['renc']  = deepcopy(self.array_renc)
+		data['lmot']  = deepcopy(self.array_lmot)
+		data['rmot']  = deepcopy(self.array_rmot)
+		data['time_min']  = self.time_min 
+		data['time_max']  = self.time_max 
+		data['angle_avg'] = self.angle_avg
+		data['angle_std'] = self.angle_std
+		data['angle_min'] = self.angle_min
+		data['angle_max'] = self.angle_max
+		data['gypo_avg']  = self.gypo_avg 
+		data['gypo_std']  = self.gypo_std 
+		data['gypo_min']  = self.gypo_min 
+		data['gypo_max']  = self.gypo_max 
+		data['lenc_avg']  = self.lenc_avg 
+		data['lenc_std']  = self.lenc_std 
+		data['lenc_min']  = self.lenc_min 
+		data['lenc_max']  = self.lenc_max 
+		data['renc_avg']  = self.renc_avg 
+		data['renc_std']  = self.renc_std 
+		data['renc_min']  = self.renc_min 
+		data['renc_max']  = self.renc_max 
+		data['lmot_avg']  = self.lmot_avg 
+		data['lmot_std']  = self.lmot_std 
+		data['lmot_min']  = self.lmot_min 
+		data['lmot_max']  = self.lmot_max 
+		data['rmot_avg']  = self.rmot_avg 
+		data['rmot_std']  = self.rmot_std 
+		data['rmot_min']  = self.rmot_min 
+		data['rmot_max']  = self.rmot_max 
 		self.lock_common.release()
-		return x, y, min_x, min_y, max_x, max_y, avg_y, std_y
+		return data
 
 class database():
 	len_time = 600
@@ -102,6 +151,8 @@ class database():
 		self.list_mpu_gypo   = []
 		self.list_enc_left   = []
 		self.list_enc_right  = []
+		self.list_mot_left   = []
+		self.list_mot_right  = []
 
 	def reset(self, cmd=None):
 		self.cmd = cmd_type() if cmd == None else cmd
@@ -110,6 +161,8 @@ class database():
 		self.list_mpu_gypo   = []
 		self.list_enc_left   = []
 		self.list_enc_right  = []
+		self.list_mot_left   = []
+		self.list_mot_right  = []
 
 	def add_data(self, env):
 		if len(self.list_mpu_count) == 0:
@@ -119,21 +172,27 @@ class database():
 				self.list_mpu_gypo.append(env.mpu_bal_gypo)
 				self.list_enc_left.append(env.enc_left)
 				self.list_enc_right.append(env.enc_right)
+				self.list_mot_left.append(env.mot_left)
+				self.list_mot_right.append(env.mot_right)
 		self.list_mpu_count.append(env.mpu_count)
 		self.list_mpu_angle.append(env.mpu_bal_angle)
 		self.list_mpu_gypo.append(env.mpu_bal_gypo)
 		self.list_enc_left.append(env.enc_left)
 		self.list_enc_right.append(env.enc_right)
+		self.list_mot_left.append(env.mot_left)
+		self.list_mot_right.append(env.mot_right)
 		self.make_plt()
 		self.make_record()
 
 	def make_plt(self):
 		self.plt_data.lock_common.acquire()
-		self.plt_data.array_time  = np.array(self.list_mpu_count[-self.len_time:])
-		self.plt_data.array_angle = np.array(self.list_mpu_angle[-self.len_time:])
-		self.plt_data.array_gypo  = np.array(self.list_mpu_gypo[-self.len_time:])
-		self.plt_data.array_left  = np.array(self.list_enc_left[-self.len_time:])
-		self.plt_data.array_right = np.array(self.list_enc_right[-self.len_time:])
+		self.plt_data.array_time  = np.array(self.list_mpu_count[-self.len_time:])/200
+		self.plt_data.array_angle = np.array(self.list_mpu_angle[-self.len_time:])/1000
+		self.plt_data.array_gypo  = np.array(self.list_mpu_gypo[-self.len_time:])/1000
+		self.plt_data.array_lenc  = np.array(self.list_enc_left[-self.len_time:])
+		self.plt_data.array_renc  = np.array(self.list_enc_right[-self.len_time:])
+		self.plt_data.array_lmot  = np.array(self.list_mot_left[-self.len_time:])
+		self.plt_data.array_rmot  = np.array(self.list_mot_right[-self.len_time:])
 		self.plt_data.calc()
 		self.plt_data.lock_common.release()
 
@@ -142,10 +201,14 @@ class database():
 		self.record.mpu_angle_std  = self.plt_data.angle_std
 		self.record.mpu_gypo_avg   = self.plt_data.gypo_avg
 		self.record.mpu_gypo_std   = self.plt_data.gypo_std
-		self.record.enc_left_avg   = self.plt_data.left_avg
-		self.record.enc_left_std   = self.plt_data.left_std
-		self.record.enc_right_avg  = self.plt_data.right_avg
-		self.record.enc_right_std  = self.plt_data.right_std
+		self.record.enc_left_avg   = self.plt_data.lenc_avg
+		self.record.enc_left_std   = self.plt_data.lenc_std
+		self.record.enc_right_avg  = self.plt_data.renc_avg
+		self.record.enc_right_std  = self.plt_data.renc_std
+		self.record.mot_left_avg   = self.plt_data.lmot_avg
+		self.record.mot_left_std   = self.plt_data.lmot_std
+		self.record.mot_right_avg  = self.plt_data.rmot_avg
+		self.record.mot_right_std  = self.plt_data.rmot_std
 
 	def save_record(self):
 		self.list_record.append((self.cmd, self.record))
@@ -192,7 +255,7 @@ class cmd_type():
 	def __init__(self):
 		self.bal_angle = 0
 		self.bal_kp = 25000
-		self.bal_kd = 1500
+		self.bal_kd = 20000
 		self.vel_kp = 90
 		self.vel_ki = 0
 		self.enc_filte = 900
@@ -293,8 +356,8 @@ class env_type():
 		self.mpu_turn_gypo = p[11]
 		self.enc_left = p[12]
 		self.enc_right = p[13]
-		self.moto_left = p[14]
-		self.moto_right = p[15]
+		self.mot_left = p[14]
+		self.mot_right = p[15]
 		self.cmd_forward = p[16]
 		self.cmd_back = p[17]
 		self.cmd_left = p[18]
@@ -316,8 +379,8 @@ class env_type():
 		self.mpu_turn_gypo,
 		self.enc_left,
 		self.enc_right,
-		self.moto_left,
-		self.moto_right)
+		self.mot_left,
+		self.mot_right)
 		)
 		return
 
@@ -376,7 +439,7 @@ class control(Thread):
 	def adjust_cmd(self):
 		global db_env
 		old_angle = self.cmd.bal_angle
-		self.cmd.bal_angle = (int)(db_env.plt_data.angle_avg)
+		self.cmd.bal_angle = (int)(db_env.plt_data.angle_avg * 1000)
 		db_env.save_record()
 		db_env.reset(self.cmd)
 		db_env.print_record_angle()
@@ -425,49 +488,105 @@ class bluecom(Thread):
 def update(i):
 	global db_env
 
-	x, y, min_x, min_y, max_x, max_y, avg_y, std_y = db_env.plt_data.get_angle()
+	data 	= db_env.plt_data.get_data()
 
-	if len(x) == 0 or min_x == None :
-		return mpu_angle,mpu_angle_avg
+	t     	= data['time']
+	min_t 	= data['time_min']
+	max_t 	= data['time_max']
 
-	min_y = min_y * 0.9 if min_y > 0 else min_y * 1.1
-	max_y = max_y * 1.1 if max_y > 0 else max_y * 0.9
+	a	= data['angle']
+	min_a	= data['angle_min']
+	max_a	= data['angle_max']
+	avg_a	= data['angle_avg']
+	std_a	= data['angle_std']
 
-	ax1.set_xlim(min_x, max_x)
-	ax1.set_ylim(min_y, max_y)
+	g	= data['gypo']
+	min_g	= data['gypo_min']
+	max_g	= data['gypo_max']
+	avg_g	= data['gypo_avg']
+	std_g	= data['gypo_std']
 
-	mpu_angle.set_data(x, y)
-	mpu_angle_avg.set_data((min_x,max_x),avg_y)
+	le	= data['lenc']
+	min_le	= data['lenc_min']
+	max_le	= data['lenc_max']
+	avg_le	= data['lenc_avg']
+	std_le	= data['lenc_std']
 
-	ax1.set_xlim(min_x, max_x)
-	ax1.set_ylim(min_y, max_y)
 
-	mpu_angle.set_data(x, y)
-	mpu_angle_avg.set_data((min_x,max_x),avg_y)
+	re	= data['renc']
+	min_re	= data['renc_min']
+	max_re	= data['renc_max']
+	avg_re	= data['renc_avg']
+	std_re	= data['renc_std']
 
-	ax1.annotate(format('%.2f / %.2f' % (avg_y, std_y)), xy=(x[0], avg_y), xytext=(x[0], avg_y*0.8))
+	lm	= data['lmot']
+	min_lm	= data['lmot_min']
+	max_lm	= data['lmot_max']
+	avg_lm	= data['lmot_avg']
+	std_lm	= data['lmot_std']
 
-	ax2.set_xlim(min_x, max_x)
-	ax2.set_ylim(min_y, max_y)
+	rm	= data['rmot']
+	min_rm	= data['rmot_min']
+	max_rm	= data['rmot_max']
+	avg_rm	= data['rmot_avg']
+	std_rm	= data['rmot_std']
 
-	t2.set_data(x, y)
-	t2a.set_data((min_x,max_x),avg_y)
+	if len(t) == 0 or min_t == None :
+		return
 
-	ax3.set_xlim(min_x, max_x)
-	ax3.set_ylim(min_y, max_y)
+	### ax1 =========================================
+	min_a = min_a * 0.9 if min_a > 0 else min_a * 1.1
+	max_a = max_a * 1.1 if max_a > 0 else max_a * 0.9
 
-	t3.set_data(x, y)
-	t3a.set_data((min_x,max_x),avg_y)
+	ax1.set_xlim(min_t, max_t)
+	ax1.set_ylim(min_a, max_a)
 
-	ax4.set_xlim(min_x, max_x)
-	ax4.set_ylim(min_y, max_y)
+	mpu_angle.set_data(t, a)
+	mpu_angle_avg.set_data((min_t,max_t),avg_a)
 
-	t4.set_data(x, y)
-	t4a.set_data((min_x,max_x),avg_y)
+	ax1.set_title(format('angle: %.2f(avg) / %.2f(std)' % (avg_a, std_a)), fontsize=16)
+
+	### ax2 =========================================
+	min_g = min_g * 0.9 if min_g > 0 else min_g * 1.1
+	max_g = max_g * 1.1 if max_g > 0 else max_g * 0.9
+
+	ax2.set_xlim(min_t, max_t)
+	ax2.set_ylim(min_g, max_g)
+
+	mpu_gypo.set_data(t, g)
+	mpu_gypo_avg.set_data((min_t,max_t),avg_g)
+
+	ax2.set_title(format('gypo: %.2f(avg) / %.2f(std)' % (avg_g, std_g)), fontsize=16)
+
+	### ax3 =========================================
+	min_le = min_le * 0.9 if min_le > 0 else min_le * 1.1
+	max_le = max_le * 1.1 if max_le > 0 else max_le * 0.9
+
+	ax3.set_xlim(min_t, max_t)
+	ax3.set_ylim(min_le, max_le)
+
+	left_enc.set_data(t, le)
+	left_enc_avg.set_data((min_t,max_t),avg_le)
+
+	ax3.set_title(format('enc: %.2f(avg) / %.2f(std)' % (avg_le, std_le)), fontsize=16)
+
+	### ax4 =========================================
+	min_lm = min_lm * 0.9 if min_lm > 0 else min_lm * 1.1
+	max_lm = max_lm * 1.1 if max_lm > 0 else max_lm * 0.9
+
+	ax4.set_xlim(min_t, max_t)
+	ax4.set_ylim(min_lm, max_lm)
+
+	left_mot.set_data(t, lm)
+	left_mot_avg.set_data((min_t,max_t),avg_lm)
+
+	ax4.set_title(format('moto: %.2f(avg) / %.2f(std)' % (avg_lm, std_lm)), fontsize=16)
+
+	### axes finished. canvas draw ==================
 
 	fig.canvas.draw()
 
-	return mpu_angle,mpu_angle_avg
+	return
 
 #==================================================
 
@@ -484,17 +603,17 @@ if __name__ == '__main__':
 
 	ax1 = plt.subplot(221)
 	plt.grid()
-	ax2 = plt.subplot(222)
+	ax2 = plt.subplot(223)
 	plt.grid()
-	ax3 = plt.subplot(223)
+	ax3 = plt.subplot(222)
 	plt.grid()
 	ax4 = plt.subplot(224)
 	plt.grid()
 
-	mpu_angle,mpu_angle_avg = ax1.plot([],[],'-',[],[],'--')
-	t2,t2a = ax2.plot([],[],'-',[],[],'--')
-	t3,t3a = ax3.plot([],[],'-',[],[],'--')
-	t4,t4a = ax4.plot([],[],'-',[],[],'--')
+	mpu_angle, mpu_angle_avg = ax1.plot([],[],'-',[],[],'--')
+	mpu_gypo,  mpu_gypo_avg	 = ax2.plot([],[],'-',[],[],'--')
+	left_enc,  left_enc_avg  = ax3.plot([],[],'-',[],[],'--')
+	left_mot,  left_mot_avg  = ax4.plot([],[],'-',[],[],'--')
 
 	anim = animation.FuncAnimation(fig, update,interval=40)
 	plt.show()
