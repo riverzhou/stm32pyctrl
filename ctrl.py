@@ -191,11 +191,11 @@ struct cmd_buff_t{
 class cmd_type():
 	def __init__(self):
 		self.bal_angle = 0
-		self.bal_kp = 20000
-		self.bal_kd = 1000
-		self.vel_kp = 80
-		self.vel_ki = 400
-		self.enc_filte = 800
+		self.bal_kp = 25000
+		self.bal_kd = 1500
+		self.vel_kp = 90
+		self.vel_ki = 0
+		self.enc_filte = 900
 		self.turn_kp = 0
 		self.turn_ki = 0
 		self.turn_cmd = 0
@@ -433,13 +433,39 @@ def update(i):
 	min_y = min_y * 0.9 if min_y > 0 else min_y * 1.1
 	max_y = max_y * 1.1 if max_y > 0 else max_y * 0.9
 
-	ax.set_xlim(min_x, max_x)
-	ax.set_ylim(min_y, max_y)
-	ax.figure.canvas.draw()
+	ax1.set_xlim(min_x, max_x)
+	ax1.set_ylim(min_y, max_y)
 
 	mpu_angle.set_data(x, y)
-	mpu_angle_avg.set_data([min_x,max_x],[avg_y, avg_y])
-	plt.annotate(format('%.2f / %.2f' % (avg_y, std_y)), xy=(x[0], avg_y), xytext=(x[0], avg_y*0.95))
+	mpu_angle_avg.set_data((min_x,max_x),avg_y)
+
+	ax1.set_xlim(min_x, max_x)
+	ax1.set_ylim(min_y, max_y)
+
+	mpu_angle.set_data(x, y)
+	mpu_angle_avg.set_data((min_x,max_x),avg_y)
+
+	ax1.annotate(format('%.2f / %.2f' % (avg_y, std_y)), xy=(x[0], avg_y), xytext=(x[0], avg_y*0.8))
+
+	ax2.set_xlim(min_x, max_x)
+	ax2.set_ylim(min_y, max_y)
+
+	t2.set_data(x, y)
+	t2a.set_data((min_x,max_x),avg_y)
+
+	ax3.set_xlim(min_x, max_x)
+	ax3.set_ylim(min_y, max_y)
+
+	t3.set_data(x, y)
+	t3a.set_data((min_x,max_x),avg_y)
+
+	ax4.set_xlim(min_x, max_x)
+	ax4.set_ylim(min_y, max_y)
+
+	t4.set_data(x, y)
+	t4a.set_data((min_x,max_x),avg_y)
+
+	fig.canvas.draw()
 
 	return mpu_angle,mpu_angle_avg
 
@@ -455,10 +481,22 @@ if __name__ == '__main__':
 	ctrl.start()
 	
 	fig = plt.figure()
-	ax = plt.axes()
-	mpu_angle,mpu_angle_avg = ax.plot([],[],'-',[],[],'--')
-	anim = animation.FuncAnimation(fig, update,interval=40)
+
+	ax1 = plt.subplot(221)
 	plt.grid()
+	ax2 = plt.subplot(222)
+	plt.grid()
+	ax3 = plt.subplot(223)
+	plt.grid()
+	ax4 = plt.subplot(224)
+	plt.grid()
+
+	mpu_angle,mpu_angle_avg = ax1.plot([],[],'-',[],[],'--')
+	t2,t2a = ax2.plot([],[],'-',[],[],'--')
+	t3,t3a = ax3.plot([],[],'-',[],[],'--')
+	t4,t4a = ax4.plot([],[],'-',[],[],'--')
+
+	anim = animation.FuncAnimation(fig, update,interval=40)
 	plt.show()
 
 	blue.close()
